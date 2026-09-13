@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LUXXY EXPLOIT</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+  body { background: #000; color: #fff; min-height: 100vh; overflow-x: hidden; position: relative; }
+  .bg-video { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.35; }
+  .bg-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, rgba(0,20,40,0.6), rgba(0,0,0,0.95)); z-index: -1; }
+  .tab-nav { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; background: rgba(0, 0, 0, 0.7); padding: 6px; border-radius: 12px; border: 1px solid #008cff; z-index: 100; backdrop-filter: blur(10px); }
+  .tab-btn { padding: 8px 20px; background: transparent; border: none; color: #7bb8ff; font-size: 13px; font-weight: 700; letter-spacing: 1px; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+  .tab-btn.active { background: linear-gradient(90deg, #008cff, #00e0ff); color: #001; }
+  .tab-btn:hover:not(.active) { background: rgba(0, 140, 255, 0.15); }
+  .page { min-height: 100vh; display: none; align-items: center; justify-content: center; padding: 100px 20px 40px; }
+  .page.active { display: flex; }
+  .card { position: relative; width: 90%; max-width: 420px; padding: 40px 30px; background: rgba(0, 0, 0, 0.65); border-radius: 20px; backdrop-filter: blur(10px); text-align: center; box-shadow: 0 0 60px rgba(0, 140, 255, 0.4); }
+  .card::before { content: ""; position: absolute; inset: -2px; border-radius: 22px; padding: 2px; background: linear-gradient(135deg, #008cff, #00e0ff, #008cff); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; animation: borderShift 4s linear infinite; }
+  @keyframes borderShift { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
+  .logo-video { width: 160px; height: 160px; border-radius: 50%; object-fit: cover; border: 3px solid #008cff; box-shadow: 0 0 30px rgba(0, 140, 255, 0.7); margin-bottom: 20px; }
+  h1 { font-size: 30px; font-weight: 900; letter-spacing: 3px; background: linear-gradient(90deg, #008cff, #00e0ff, #008cff); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 3s linear infinite; margin-bottom: 8px; }
+  @keyframes shine { to { background-position: 200% center; } }
+  .subtitle { color: #7bb8ff; font-size: 12px; letter-spacing: 2px; margin-bottom: 24px; opacity: 0.8; }
+  .divider { height: 1px; background: linear-gradient(90deg, transparent, #008cff, transparent); margin: 20px 0; }
+  input[type="text"], input[type="password"], select { width: 100%; padding: 13px 16px; background: rgba(0, 20, 40, 0.7); border: 1px solid #008cff; border-radius: 10px; color: #fff; font-size: 14px; outline: none; text-align: center; letter-spacing: 1px; transition: all 0.3s; margin-bottom: 10px; }
+  input[type="text"]:focus, input[type="password"]:focus, select:focus { border-color: #00e0ff; box-shadow: 0 0 20px rgba(0, 224, 255, 0.5); }
+  input::placeholder { color: #557799; }
+  select { text-align: left; cursor: pointer; }
+  select option { background: #001d3d; color: #fff; }
+  button.main-btn { width: 100%; padding: 13px; background: linear-gradient(90deg, #008cff, #00e0ff); border: none; border-radius: 10px; color: #001; font-size: 14px; font-weight: 800; letter-spacing: 2px; cursor: pointer; transition: all 0.3s; margin-top: 4px; }
+  button.main-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0, 140, 255, 0.5); }
+  .status-box { margin-top: 16px; padding: 12px; border-radius: 10px; font-size: 13px; display: none; }
+  .status-box.show { display: block; }
+  .status-ok { background: rgba(0, 200, 100, 0.15); border: 1px solid #00c864; color: #00e080; }
+  .status-err { background: rgba(200, 40, 40, 0.15); border: 1px solid #c82828; color: #ff6666; }
+  .footer-link { margin-top: 20px; font-size: 12px; color: #557799; }
+  .footer-link a { color: #00b0ff; text-decoration: none; }
+  .admin-container { width: 90%; max-width: 600px; background: rgba(0, 20, 40, 0.85); border: 1px solid #008cff; border-radius: 16px; padding: 24px; box-shadow: 0 0 40px rgba(0, 140, 255, 0.3); backdrop-filter: blur(10px); }
+  .admin-container h2 { color: #7bb8ff; font-size: 15px; margin: 22px 0 12px; letter-spacing: 1px; text-transform: uppercase; }
+  .admin-container h2:first-child { margin-top: 0; }
+  .login-box { display: none; }
+  .login-box.show { display: block; }
+  .admin-panel { display: none; }
+  .admin-panel.show { display: block; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  button.small { padding: 8px 14px; background: linear-gradient(90deg, #008cff, #00e0ff); border: none; border-radius: 8px; color: #001; font-weight: 700; font-size: 12px; cursor: pointer; letter-spacing: 1px; transition: all 0.2s; }
+  button.small:hover { transform: translateY(-1px); box-shadow: 0 5px 15px rgba(0,140,255,0.4); }
+  button.small.danger { background: linear-gradient(90deg, #ff3030, #ff6060); color: #fff; }
+  button.small.warning { background: linear-gradient(90deg, #ffaa00, #ffcc40); color: #001; }
+  button.small.ghost { background: transparent; border: 1px solid #008cff; color: #00b0ff; }
+  .user-item { background: rgba(0, 140, 255, 0.08); border-left: 3px solid #008cff; padding: 12px; margin-bottom: 10px; border-radius: 6px; font-size: 13px; }
+  .user-item strong { color: #00e0ff; }
+  .user-item .row { display: flex; justify-content: space-between; margin: 4px 0; flex-wrap: wrap; gap: 6px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+  .badge.lifetime { background: #00c864; color: #001; }
+  .badge.trial { background: #ffaa00; color: #001; }
+  .badge.expired { background: #c82828; color: #fff; }
+  .msg { padding: 10px; border-radius: 6px; margin: 10px 0; text-align: center; font-size: 13px; animation: fadeIn 0.3s; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+  .msg.ok { background: rgba(0,200,100,0.2); color: #00e080; border: 1px solid #00c864; }
+  .msg.err { background: rgba(200,40,40,0.2); color: #ff6666; border: 1px solid #c82828; }
+  .note { font-size: 11px; color: #557799; margin-top: 20px; line-height: 1.7; padding: 12px; background: rgba(0,0,0,0.4); border-radius: 6px; border-left: 2px solid #008cff; }
+  .note b { color: #7bb8ff; }
+  .note code { background: #001d3d; padding: 1px 5px; border-radius: 3px; color: #00e0ff; font-size: 11px; }
+  .user-count { color: #00e0ff; font-weight: 900; }
+  .search-box { position: relative; margin-bottom: 12px; }
+  .search-box input { padding-left: 38px !important; text-align: left !important; margin-bottom: 0 !important; }
+  .search-box .icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: #557799; font-size: 14px; pointer-events: none; }
+  .search-box .clear-btn { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #557799; font-size: 16px; cursor: pointer; display: none; padding: 4px; }
+  .search-box .clear-btn.show { display: block; }
+  .search-box .clear-btn:hover { color: #00e0ff; }
+  .search-info { font-size: 11px; color: #557799; margin-bottom: 10px; text-align: center; display: none; }
+  .search-info.show { display: block; }
+  .search-info b { color: #00e0ff; }
+  .empty-state { text-align: center; padding: 30px 15px; color: #557799; font-size: 13px; }
+  .empty-state .icon { font-size: 40px; display: block; margin-bottom: 10px; opacity: 0.5; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #001; }
+  ::-webkit-scrollbar-thumb { background: #008cff; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<video class="bg-video" autoplay muted loop playsinline>
+  <source src="https://cdn.pixabay.com/video/2022/12/11/143141-780647548_large.mp4" type="video/mp4">
+</video>
+<div class="bg-overlay"></div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('home', this)">🏠 HOME</button>
+  <button class="tab-btn" onclick="switchTab('admin', this)">⚙️ ADMIN</button>
+</div>
+
+<div class="page active" id="page-home">
+  <div class="card">
+    <video class="logo-video" autoplay muted loop playsinline>
+      <source src="https://cdn.pixabay.com/video/2020/08/30/48569-454896437_large.mp4" type="video/mp4">
+    </video>
+    <h1>LUXXY EXPLOIT</h1>
+    <div class="subtitle">PREMIUM SCRIPT HUB</div>
+    <div class="divider"></div>
+    <input type="text" id="userId" placeholder="Masukkan Roblox User ID" maxlength="15" inputmode="numeric">
+    <button class="main-btn" onclick="checkAccess()">CEK AKSES</button>
+    <div class="status-box" id="statusBox"></div>
+    <div class="footer-link">
+      Belum terdaftar? Hubungi admin di
+      <a href="https://discord.gg/xxxxx" target="_blank">Discord</a>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-admin">
+  <div class="admin-container">
+    <div class="login-box show" id="loginBox">
+      <h2 style="text-align:center; color:#00b0ff; font-size:20px;">🔐 ADMIN LOGIN</h2>
+      <input type="password" id="adminPass" placeholder="Password admin" onkeypress="if(event.key==='Enter')login()">
+      <button class="main-btn" onclick="login()">MASUK</button>
+    </div>
+
+    <div class="admin-panel" id="adminPanel">
+      <h2 style="color:#00b0ff; font-size:20px; text-align:center;">⚙️ PANEL ADMIN</h2>
+      <div id="msgBox"></div>
+
+      <h2>➕ Tambah User Baru</h2>
+      <input type="text" id="newUserId" placeholder="Roblox User ID (angka)" inputmode="numeric">
+      <select id="newStatus">
+        <option value="trial">Trial (1 hari)</option>
+        <option value="lifetime">Lifetime</option>
+      </select>
+      <input type="text" id="newNote" placeholder="Catatan (opsional)">
+      <button class="main-btn" onclick="addUser()">TAMBAH</button>
+
+      <h2>📋 Daftar User (<span class="user-count" id="userCount">0</span>)</h2>
+
+      <div class="search-box">
+        <span class="icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Cari User ID, status, atau catatan..." oninput="renderUsers()">
+        <button class="clear-btn" id="clearSearch" onclick="clearSearch()">✕</button>
+      </div>
+      <div class="search-info" id="searchInfo"></div>
+
+      <div id="userList"></div>
+
+      <h2>💾 Export / Import</h2>
+      <div class="btn-row">
+        <button class="small" onclick="exportJSON()">📥 EXPORT whitelist.json</button>
+        <button class="small ghost" onclick="document.getElementById('importFile').click()">📤 IMPORT</button>
+        <button class="small ghost" onclick="logout()">🚪 LOGOUT</button>
+      </div>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
+
+      <div class="note">
+        <b>Cara pakai:</b><br>
+        1. Password admin default: <code>luxxy2026</code> (ganti di kode: cari <code>ADMIN_PASS</code>)<br>
+        2. Setelah edit whitelist, klik <b>EXPORT</b> → download file<br>
+        3. Upload file <code>whitelist.json</code> ke GitHub repository kamu<br>
+        4. Script Roblox akan otomatis baca yang terbaru<br>
+        5. <b>Search tips:</b> ketik <code>expired</code> untuk lihat user expired, <code>aktif</code> untuk user aktif
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ADMIN_PASS = "luxxy2026";
+const WHITELIST_URL = "whitelist.json";
+const STORAGE_KEY = "luxxy_whitelist";
+
+let whitelist = { version: 1, users: {} };
+
+function switchTab(tab, btn) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("page-" + tab).classList.add("active");
+  btn.classList.add("active");
+}
+
+async function checkAccess() {
+  const userId = document.getElementById("userId").value.trim();
+  const box = document.getElementById("statusBox");
+
+  if (!userId || isNaN(userId)) {
+    box.className = "status-box status-err show";
+    box.textContent = "❌ User ID tidak valid";
+    return;
+  }
+
+  box.className = "status-box show";
+  box.textContent = "⏳ Memeriksa...";
+  box.style.color = "#00b0ff";
+
+  try {
+    const res = await fetch(WHITELIST_URL + "?t=" + Date.now());
+    const data = await res.json();
+    const user = data.users[userId];
+
+    if (!user) {
+      box.className = "status-box status-err show";
+      box.textContent = "❌ User ID tidak terdaftar di whitelist";
+      return;
+    }
+
+    let statusText = "";
+    if (user.status === "lifetime") {
+      statusText = "✅ Akses Lifetime - Selamat menikmati!";
+    } else if (user.status === "trial") {
+      if (!user.trial_started) {
+        statusText = "✅ Trial aktif - 1 hari sejak execute pertama";
+      } else {
+        const expires = new Date(user.trial_expires);
+        const now = new Date();
+        if (now > expires) {
+          statusText = "❌ Trial sudah expired. Hubungi admin untuk reset.";
+        } else {
+          const sisa = Math.ceil((expires - now) / (1000 * 60 * 60));
+          statusText = "✅ Trial aktif - Sisa " + sisa + " jam";
+        }
+      }
+    }
+
+    const isErr = statusText.startsWith("❌");
+    box.className = "status-box show " + (isErr ? "status-err" : "status-ok");
+    box.textContent = statusText;
+
+  } catch (e) {
+    box.className = "status-box status-err show";
+    box.textContent = "❌ Gagal konek ke server";
+  }
+}
+
+function login() {
+  const pass = document.getElementById("adminPass").value;
+  if (pass === ADMIN_PASS) {
+    document.getElementById("loginBox").classList.remove("show");
+    document.getElementById("adminPanel").classList.add("show");
+    loadWhitelist().then(renderUsers);
+  } else {
+    alert("Password salah!");
+  }
+}
+
+function logout() {
+  document.getElementById("loginBox").classList.add("show");
+  document.getElementById("adminPanel").classList.remove("show");
+  document.getElementById("adminPass").value = "";
+}
+
+async function loadWhitelist() {
+  const local = localStorage.getItem(STORAGE_KEY);
+  if (local) {
+    try { whitelist = JSON.parse(local); return; } catch (e) {}
+  }
+  try {
+    const res = await fetch(WHITELIST_URL + "?t=" + Date.now());
+    whitelist = await res.json();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(whitelist));
+  } catch (e) {
+    whitelist = { version: 1, users: {} };
+  }
+}
+
+function saveWhitelist() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(whitelist));
+}
+
+function showMsg(text, type) {
+  const box = document.getElementById("msgBox");
+  box.innerHTML = '<div class="msg ' + type + '">' + text + '</div>';
+  setTimeout(() => box.innerHTML = "", 3000);
+}
+
+function addUser() {
+  const id = document.getElementById("newUserId").value.trim();
+  const status = document.getElementById("newStatus").value;
+  const note = document.getElementById("newNote").value.trim() || "-";
+
+  if (!id || isNaN(id)) { showMsg("User ID harus angka!", "err"); return; }
+  if (whitelist.users[id]) { showMsg("User ID sudah terdaftar!", "err"); return; }
+
+  whitelist.users[id] = {
+    status: status,
+    note: note,
+    created: new Date().toISOString().split("T")[0],
+    trial_started: null,
+    trial_expires: null
+  };
+
+  saveWhitelist();
+  renderUsers();
+  document.getElementById("newUserId").value = "";
+  document.getElementById("newNote").value = "";
+  showMsg("✅ User " + id + " ditambahkan", "ok");
+}
+
+function removeUser(id) {
+  if (!confirm("Hapus user " + id + "?")) return;
+  delete whitelist.users[id];
+  saveWhitelist();
+  renderUsers();
+  showMsg("🗑️ User dihapus", "ok");
+}
+
+function resetTrial(id) {
+  if (!confirm("Reset trial untuk user " + id + "?")) return;
+  whitelist.users[id].trial_started = null;
+  whitelist.users[id].trial_expires = null;
+  saveWhitelist();
+  renderUsers();
+  showMsg("🔄 Trial user " + id + " berhasil di-reset", "ok");
+}
+
+function toggleStatus(id) {
+  const u = whitelist.users[id];
+  u.status = u.status === "trial" ? "lifetime" : "trial";
+  if (u.status === "trial") {
+    u.trial_started = null;
+    u.trial_expires = null;
+  }
+  saveWhitelist();
+  renderUsers();
+  showMsg("Status " + id + " → " + u.status, "ok");
+}
+
+function renderUsers() {
+  const list = document.getElementById("userList");
+  const searchInput = document.getElementById("searchInput");
+  const searchInfo = document.getElementById("searchInfo");
+  const clearBtn = document.getElementById("clearSearch");
+
+  const query = (searchInput?.value || "").trim().toLowerCase();
+  const allIds = Object.keys(whitelist.users);
+
+  let filteredIds = allIds;
+  if (query) {
+    filteredIds = allIds.filter(id => {
+      const u = whitelist.users[id];
+      const idMatch = id.toLowerCase().includes(query);
+      const statusMatch = u.status.toLowerCase().includes(query);
+      const noteMatch = (u.note || "").toLowerCase().includes(query);
+
+      let expiredMatch = false;
+      if (query === "expired" || query === "exp") {
+        expiredMatch = u.status === "trial" && u.trial_expires &&
+                       new Date() > new Date(u.trial_expires);
+      }
+
+      let activeMatch = false;
+      if (query === "active" || query === "aktif") {
+        if (u.status === "lifetime") activeMatch = true;
+        else if (u.status === "trial") {
+          activeMatch = !u.trial_expires || new Date() < new Date(u.trial_expires);
+        }
+      }
+
+      return idMatch || statusMatch || noteMatch || expiredMatch || activeMatch;
+    });
+  }
+
+  document.getElementById("userCount").textContent = allIds.length;
+
+  if (query) {
+    searchInfo.classList.add("show");
+    searchInfo.innerHTML = 'Menampilkan <b>' + filteredIds.length + '</b> dari <b>' + allIds.length + '</b> user untuk "<b>' + query + '</b>"';
+    clearBtn.classList.add("show");
+  } else {
+    searchInfo.classList.remove("show");
+    clearBtn.classList.remove("show");
+  }
+
+  if (allIds.length === 0) {
+    list.innerHTML = '<div class="empty-state"><span class="icon">📭</span>Belum ada user terdaftar.</div>';
+    return;
+  }
+  if (filteredIds.length === 0) {
+    list.innerHTML = '<div class="empty-state"><span class="icon">🔍</span>Tidak ada user yang cocok dengan pencarian.</div>';
+    return;
+  }
+
+  list.innerHTML = filteredIds.map(id => {
+    const u = whitelist.users[id];
+    let badgeClass = u.status;
+    let badgeText = u.status === "lifetime" ? "LIFETIME" : "TRIAL";
+
+    if (u.status === "trial" && u.trial_expires) {
+      const expired = new Date() > new Date(u.trial_expires);
+      if (expired) { badgeClass = "expired"; badgeText = "EXPIRED"; }
+    }
+
+    const trialInfo = u.status === "trial"
+      ? (u.trial_started
+          ? "Mulai: " + u.trial_started + " • Expired: " + u.trial_expires
+          : "Belum pernah execute (fresh trial)")
+      : "Berlaku selamanya";
+
+    let displayId = id;
+    if (query && id.toLowerCase().includes(query)) {
+      const idx = id.toLowerCase().indexOf(query);
+      displayId = id.substring(0, idx) +
+                  '<mark style="background:#00e0ff; color:#001; padding:0 2px; border-radius:3px;">' +
+                  id.substring(idx, idx + query.length) +
+                  '</mark>' +
+                  id.substring(idx + query.length);
+    }
+
+    return `
+      <div class="user-item">
+        <div class="row">
+          <strong>${displayId}</strong>
+          <span class="badge ${badgeClass}">${badgeText}</span>
+        </div>
+        <div class="row">
+          <span>📝 ${u.note}</span>
+          <span>📅 ${u.created}</span>
+        </div>
+        <div class="row">
+          <span style="color:#7bb8ff">${trialInfo}</span>
+        </div>
+        <div class="btn-row" style="margin-top:8px">
+          <button class="small warning" onclick="resetTrial('${id}')">🔄 Reset Trial</button>
+          <button class="small ghost" onclick="toggleStatus('${id}')">↔️ Ganti Status</button>
+          <button class="small danger" onclick="removeUser('${id}')">🗑️ Hapus</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function clearSearch() {
+  document.getElementById("searchInput").value = "";
+  renderUsers();
+}
+
+function exportJSON() {
+  const dataStr = JSON.stringify(whitelist, null, 2);
+  const blob = new Blob([dataStr], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "whitelist.json";
+  a.click();
+  URL.revokeObjectURL(url);
+  showMsg("💾 File downloaded. Upload ke GitHub!", "ok");
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      whitelist = JSON.parse(e.target.result);
+      saveWhitelist();
+      renderUsers();
+      showMsg("📥 Import berhasil!", "ok");
+    } catch (err) {
+      showMsg("File tidak valid!", "err");
+    }
+  };
+  reader.readAsText(file);
+}
+</script>
+
+</body>
+</html>
