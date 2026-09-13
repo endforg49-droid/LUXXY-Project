@@ -1,1 +1,1 @@
-# LUXXY-Project
+# luxxy project
