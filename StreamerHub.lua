@@ -1,6 +1,6 @@
 --[[
     ╔══════════════════════════════════════════════════════════════╗
-    ║       LUXXY PREMIUM — Streamer + Key + Monkey Push (FIXED)   ║
+    ║       LUXXY PREMIUM — Streamer + Key + Monkey Push           ║
     ║       Blue Sky Gradient | HWID Lock | 4 Monkey Feature       ║
     ╚══════════════════════════════════════════════════════════════╝
 --]]
@@ -10,6 +10,7 @@
 -- ═══════════════════════════════════════════════════════════════
 local WORKER_URL = "https://luxxys-worker.haloyypayo.workers.dev"
 local ADMIN_WA = "082142293503"
+local MAIN_SCRIPT_URL = "https://raw.githubusercontent.com/endforg49/luxxys-store/main/streamer.lua"
 local KEY_FILE = "luxxys_premium_key.txt"
 local CONFIG_FILE = "luxxys_streamer_config.json"
 
@@ -29,7 +30,7 @@ local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
 -- ═══════════════════════════════════════════════════════════════
--- WARNA
+-- WARNA THEME — BLUE SKY GRADIENT
 -- ═══════════════════════════════════════════════════════════════
 local COLOR = {
     SkyTop      = Color3.fromRGB(135, 206, 250),
@@ -50,7 +51,7 @@ local COLOR = {
 }
 
 -- ═══════════════════════════════════════════════════════════════
--- CFG
+-- CONFIG STREAMER
 -- ═══════════════════════════════════════════════════════════════
 local CFG = {
     DefaultUIBind       = Enum.KeyCode.F1,
@@ -89,11 +90,11 @@ local CFG = {
     ThunderVolume       = 2,
     ThunderPitch        = 1,
 
-    MonkeyCount     = 4,
-    MonkeyDistance  = 8,
-    MonkeySize      = 3,
-    MonkeyForce     = 8,
-    MonkeyPushSpeed = 0.15,
+    MonkeyCount     = 4,       -- 4 monyet (1 per sisi)
+    MonkeyDistance  = 8,       -- jarak dari player (studs)
+    MonkeySize      = 3,       -- ukuran monyet
+    MonkeyForce     = 8,       -- kekuatan dorong (kecil biar ga mental)
+    MonkeyPushSpeed = 0.15,    -- seberapa sering dorong (detik)
 
     FolderName      = "LuxxysPrisonTrap",
     MonkeyFolder    = "LuxxysMonkeys",
@@ -166,6 +167,7 @@ local function getHWID()
     if hwid then return hwid end
     pcall(function() if syn and syn.get_hwid then hwid = syn.get_hwid() end end)
     if hwid then return hwid end
+
     local userId = tostring(LocalPlayer.UserId)
     local clientId = "unknown"
     pcall(function() clientId = game:GetService("RbxAnalyticsService"):GetClientId() end)
@@ -216,12 +218,9 @@ local function loadConfig()
         if isfile(CONFIG_FILE) then
             local data = HttpService:JSONDecode(readfile(CONFIG_FILE))
             local binds = {
-                {key="UIBind", state="UIBind"},
-                {key="PrisonBind", state="PrisonBind"},
-                {key="PushBind", state="PushBind"},
-                {key="PushLeftBind", state="PushLeftBind"},
-                {key="PushRightBind", state="PushRightBind"},
-                {key="LightningBind", state="LightningBind"},
+                {key="UIBind", state="UIBind"}, {key="PrisonBind", state="PrisonBind"},
+                {key="PushBind", state="PushBind"}, {key="PushLeftBind", state="PushLeftBind"},
+                {key="PushRightBind", state="PushRightBind"}, {key="LightningBind", state="LightningBind"},
                 {key="MonkeyBind", state="MonkeyBind"},
             }
             for _, b in ipairs(binds) do
@@ -311,16 +310,288 @@ end)
 loadConfig()
 
 -- ═══════════════════════════════════════════════════════════════
--- FORWARD DECLARATION — biar bisa dipanggil dari buildKeyUI
+-- KEY AUTH UI — BLUE SKY GRADIENT
 -- ═══════════════════════════════════════════════════════════════
-local buildStreamerUI = nil
+local function buildKeyUI()
+    local old = CoreGui:FindFirstChild("LuxxysKeyUI")
+    if old then old:Destroy() end
+
+    local sg = new("ScreenGui", {
+        Name = "LuxxysKeyUI",
+        ResetOnSpawn = false,
+        IgnoreGuiInset = true,
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+        Parent = CoreGui,
+    })
+
+    local backdrop = new("Frame", {
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+        BackgroundTransparency = 0.5,
+        BorderSizePixel = 0,
+        ZIndex = 1,
+        Parent = sg,
+    })
+
+    local Main = new("Frame", {
+        Size = UDim2.new(0, 420, 0, 340),
+        Position = UDim2.new(0.5, -210, 0.5, -170),
+        BackgroundColor3 = COLOR.White,
+        BorderSizePixel = 0,
+        Active = true,
+        Draggable = true,
+        ZIndex = 10,
+        Parent = sg,
+    })
+    corner(Main, 18)
+
+    local skyGradient = new("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, COLOR.SkyTop),
+            ColorSequenceKeypoint.new(0.4, COLOR.SkyMid),
+            ColorSequenceKeypoint.new(0.7, COLOR.White),
+            ColorSequenceKeypoint.new(1, COLOR.SkyMid),
+        }),
+        Rotation = 135,
+        Parent = Main,
+    })
+
+    stroke(Main, COLOR.BorderBlue, 3)
+
+    -- Shimmer
+    local Shimmer = new("Frame", {
+        Size = UDim2.new(0, 100, 1, 0),
+        Position = UDim2.new(-0.3, 0, 0, 0),
+        BackgroundColor3 = COLOR.White,
+        BackgroundTransparency = 0.6,
+        BorderSizePixel = 0,
+        ZIndex = 11,
+        Parent = Main,
+    })
+    corner(Shimmer, 18)
+    local shimGrad = new("UIGradient", {
+        Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 1),
+            NumberSequenceKeypoint.new(0.5, 0.1),
+            NumberSequenceKeypoint.new(1, 1),
+        }),
+        Parent = Shimmer,
+    })
+
+    task.spawn(function()
+        while Shimmer.Parent do
+            Shimmer.Position = UDim2.new(-0.3, 0, 0, 0)
+            tween(Shimmer, {Position = UDim2.new(1.3, 0, 0, 0)}, 2.5, Enum.EasingStyle.Linear):Play()
+            task.wait(3)
+        end
+    end)
+
+    -- Title
+    new("TextLabel", {
+        Size = UDim2.new(1, -40, 0, 40),
+        Position = UDim2.new(0, 20, 0, 20),
+        BackgroundTransparency = 1,
+        Text = "🔐 LUXXY PREMIUM ACCESS",
+        TextColor3 = COLOR.DarkText,
+        Font = Enum.Font.GothamBold,
+        TextSize = 20,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        ZIndex = 20,
+        Parent = Main,
+    })
+
+    new("TextLabel", {
+        Size = UDim2.new(1, -40, 0, 20),
+        Position = UDim2.new(0, 20, 0, 62),
+        BackgroundTransparency = 1,
+        Text = "Masukkan key untuk akses script",
+        TextColor3 = COLOR.ShadowBlue,
+        Font = Enum.Font.Gotham,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        ZIndex = 20,
+        Parent = Main,
+    })
+
+    new("Frame", {
+        Size = UDim2.new(1, -80, 0, 1),
+        Position = UDim2.new(0, 40, 0, 90),
+        BackgroundColor3 = COLOR.BorderBlue,
+        BackgroundTransparency = 0.3,
+        BorderSizePixel = 0,
+        ZIndex = 20,
+        Parent = Main,
+    })
+
+    -- Input
+    local Input = new("TextBox", {
+        Size = UDim2.new(1, -60, 0, 48),
+        Position = UDim2.new(0, 30, 0, 110),
+        BackgroundColor3 = COLOR.White,
+        BackgroundTransparency = 0.15,
+        BorderSizePixel = 0,
+        Text = "",
+        PlaceholderText = "Luxxy-XXXX-XXXX-XXXX",
+        PlaceholderColor3 = Color3.fromRGB(150, 180, 210),
+        TextColor3 = COLOR.DarkText,
+        Font = Enum.Font.Code,
+        TextSize = 16,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        ClearTextOnFocus = false,
+        ZIndex = 20,
+        Parent = Main,
+    })
+    corner(Input, 10)
+    stroke(Input, COLOR.BorderBlue, 2)
+
+    -- Status
+    local Status = new("TextLabel", {
+        Size = UDim2.new(1, -60, 0, 24),
+        Position = UDim2.new(0, 30, 0, 168),
+        BackgroundTransparency = 1,
+        Text = "",
+        TextColor3 = COLOR.ShadowBlue,
+        Font = Enum.Font.GothamBold,
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        ZIndex = 20,
+        Parent = Main,
+    })
+
+    -- Verify
+    local VerifyBtn = new("TextButton", {
+        Size = UDim2.new(1, -60, 0, 48),
+        Position = UDim2.new(0, 30, 0, 200),
+        BackgroundColor3 = COLOR.BorderBlue,
+        BorderSizePixel = 0,
+        Text = "✓ VERIFIKASI KEY",
+        TextColor3 = COLOR.White,
+        Font = Enum.Font.GothamBold,
+        TextSize = 15,
+        ZIndex = 20,
+        Parent = Main,
+    })
+    corner(VerifyBtn, 10)
+    local vGrad = new("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 180, 255)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(120, 200, 255)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 180, 255)),
+        }),
+        Parent = VerifyBtn,
+    })
+
+    task.spawn(function()
+        while vGrad.Parent do
+            vGrad.Offset = Vector2.new(-1, 0)
+            tween(vGrad, {Offset = Vector2.new(1, 0)}, 2, Enum.EasingStyle.Linear):Play()
+            task.wait(2.2)
+        end
+    end)
+
+    -- Info WA
+    new("TextLabel", {
+        Size = UDim2.new(1, -60, 0, 40),
+        Position = UDim2.new(0, 30, 0, 258),
+        BackgroundTransparency = 1,
+        Text = "💬 Belum punya key?\nChat Admin WhatsApp: " .. ADMIN_WA,
+        TextColor3 = COLOR.DarkText,
+        Font = Enum.Font.Gotham,
+        TextSize = 11,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        TextYAlignment = Enum.TextYAlignment.Top,
+        TextWrapped = true,
+        ZIndex = 20,
+        Parent = Main,
+    })
+
+    local function setStatus(txt, clr)
+        Status.Text = txt
+        Status.TextColor3 = clr
+    end
+
+    local function setBtn(state)
+        if state == "loading" then
+            VerifyBtn.Text = "⏳ MEMVERIFIKASI..."
+            VerifyBtn.BackgroundColor3 = COLOR.Warning
+            vGrad.Enabled = false
+        elseif state == "valid" then
+            VerifyBtn.Text = "✓ AKSES DITERIMA"
+            VerifyBtn.BackgroundColor3 = COLOR.Success
+        elseif state == "error" then
+            VerifyBtn.Text = "✗ AKSES DITOLAK"
+            VerifyBtn.BackgroundColor3 = COLOR.Error
+            vGrad.Enabled = false
+        else
+            VerifyBtn.Text = "✓ VERIFIKASI KEY"
+            VerifyBtn.BackgroundColor3 = COLOR.BorderBlue
+            vGrad.Enabled = true
+        end
+    end
+
+    local function doVerify()
+        local key = Input.Text
+        if key == "" or #key < 5 then
+            setStatus("❌ Key tidak boleh kosong!", COLOR.Error)
+            return
+        end
+
+        setStatus("⏳ Memverifikasi ke server...", COLOR.Warning)
+        setBtn("loading")
+
+        task.spawn(function()
+            local data, err = verifyKey(key)
+            if data and data.valid then
+                setStatus("✅ Akses diterima! Memuat script...", COLOR.Success)
+                setBtn("valid")
+                saveKey(key)
+
+                task.wait(1.5)
+
+                tween(Main, {BackgroundTransparency = 1, Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0)}, 0.5):Play()
+                tween(backdrop, {BackgroundTransparency = 1}, 0.5):Play()
+
+                task.wait(0.6)
+                sg:Destroy()
+                buildStreamerUI()
+            else
+                setStatus("❌ " .. tostring(err), COLOR.Error)
+                setBtn("error")
+                task.wait(2)
+                setBtn("idle")
+            end
+        end)
+    end
+
+    VerifyBtn.MouseButton1Click:Connect(doVerify)
+    Input.FocusLost:Connect(function(enter) if enter then doVerify() end end)
+
+    -- Auto login
+    task.spawn(function()
+        local savedKey = loadKey()
+        if not savedKey then return end
+        Input.Text = savedKey
+        setStatus("⏳ Auto-login...", COLOR.Warning)
+        task.wait(0.5)
+        local data, err = verifyKey(savedKey)
+        if data and data.valid then
+            setStatus("✅ Auto-login OK", COLOR.Success)
+            task.wait(0.8)
+            tween(Main, {BackgroundTransparency = 1, Size = UDim2.new(0, 0, 0, 0)}, 0.5):Play()
+            tween(backdrop, {BackgroundTransparency = 1}, 0.5):Play()
+            task.wait(0.6)
+            sg:Destroy()
+            buildStreamerUI()
+        else
+            setStatus("❌ Key tersimpan invalid. Masukkan key baru.", COLOR.Error)
+        end
+    end)
+end
 
 -- ═══════════════════════════════════════════════════════════════
--- STREAMER UI — DIPINDAH KE ATAS DULU
+-- STREAMER UI
 -- ═══════════════════════════════════════════════════════════════
-buildStreamerUI = function()
-    print("[LUXXYS] Building Streamer UI...")
-
+function buildStreamerUI()
     local old = CoreGui:FindFirstChild("LuxxysStreamerUI")
     if old then old:Destroy() end
 
@@ -332,7 +603,7 @@ buildStreamerUI = function()
         Parent = CoreGui,
     })
 
-    -- Prison Timer
+    -- Prison Timer Display
     local PrisonTimer = new("Frame", {
         Size = UDim2.new(0, 220, 0, 44),
         Position = UDim2.new(0.5, -110, 0, 90),
@@ -360,7 +631,7 @@ buildStreamerUI = function()
         Parent = PrisonTimer,
     })
 
-    -- Burn Timer
+    -- Burn Timer Display
     local BurnTimer = new("Frame", {
         Size = UDim2.new(0, 220, 0, 44),
         Position = UDim2.new(0.5, -110, 0, 40),
@@ -459,6 +730,7 @@ buildStreamerUI = function()
     })
     corner(CloseBtn, 5)
 
+    -- Cyan Line
     local CyanLine = new("Frame", {
         Size = UDim2.new(1, 0, 0, 2),
         Position = UDim2.new(0, 0, 0, 40),
@@ -476,6 +748,7 @@ buildStreamerUI = function()
         end
     end)
 
+    -- Body Scroll
     local BodyScroll = new("ScrollingFrame", {
         Size = UDim2.new(1, -12, 1, -94),
         Position = UDim2.new(0, 6, 0, 46),
@@ -608,7 +881,7 @@ buildStreamerUI = function()
     })
     corner(cpSaveBtn, 6)
 
-    -- Monkey Toggle Row
+    -- Monkey Toggle
     local monkeyToggleRow = new("Frame", {
         Size = UDim2.new(1, -20, 0, 28),
         Position = UDim2.new(0, 10, 0, 306),
@@ -643,7 +916,7 @@ buildStreamerUI = function()
     })
     corner(monkeyToggleBtn, 5)
 
-    -- Checkpoint List Section
+    -- Checkpoint List
     local cpSection = new("Frame", {
         Size = UDim2.new(1, 0, 0, 200),
         BackgroundColor3 = COLOR.Dark,
@@ -689,6 +962,8 @@ buildStreamerUI = function()
     -- ═══════════════════════════════════════════════════════════
     -- HELPER FUNCTIONS
     -- ═══════════════════════════════════════════════════════════
+
+    -- FLY
     local function flyTo(targetPos)
         if State.IsFlying then return end
         State.IsFlying = true
@@ -733,6 +1008,7 @@ buildStreamerUI = function()
         end)
     end
 
+    -- PUSH
     local function applyPush(vel)
         local char = LocalPlayer.Character
         if not char then return end
@@ -995,7 +1271,9 @@ buildStreamerUI = function()
         State.IsStriking = false
     end
 
+    -- ═══════════════════════════════════════════════════════════
     -- MONKEY PUSH 🐒
+    -- ═══════════════════════════════════════════════════════════
     local function createMonkey(pos, facing)
         local folder = Instance.new("Folder")
         folder.Name = "Monkey"
@@ -1023,15 +1301,29 @@ buildStreamerUI = function()
         local sz = CFG.MonkeySize
         local cf = CFrame.new(pos, pos + facing)
 
+        -- Body
         makePart("Body", Vector3.new(sz, sz * 1.2, sz * 0.8), cf, bodyColor)
-        makePart("Head", Vector3.new(sz * 0.9, sz * 0.9, sz * 0.9), cf * CFrame.new(0, sz * 1.05, 0), bodyColor)
-        makePart("Face", Vector3.new(sz * 0.6, sz * 0.5, sz * 0.1), cf * CFrame.new(0, sz * 1.05, sz * 0.45), faceColor)
-        makePart("EyeL", Vector3.new(sz * 0.15, sz * 0.15, sz * 0.15), cf * CFrame.new(-sz * 0.2, sz * 1.15, sz * 0.5), eyeColor)
-        makePart("EyeR", Vector3.new(sz * 0.15, sz * 0.15, sz * 0.15), cf * CFrame.new(sz * 0.2, sz * 1.15, sz * 0.5), eyeColor)
-        makePart("ArmL", Vector3.new(sz * 0.25, sz * 1, sz * 0.25), cf * CFrame.new(-sz * 0.65, sz * 0.3, 0), bodyColor)
-        makePart("ArmR", Vector3.new(sz * 0.25, sz * 1, sz * 0.25), cf * CFrame.new(sz * 0.65, sz * 0.3, 0), bodyColor)
-        makePart("LegL", Vector3.new(sz * 0.3, sz * 0.8, sz * 0.3), cf * CFrame.new(-sz * 0.25, -sz * 0.9, 0), bodyColor)
-        makePart("LegR", Vector3.new(sz * 0.3, sz * 0.8, sz * 0.3), cf * CFrame.new(sz * 0.25, -sz * 0.9, 0), bodyColor)
+        -- Head
+        makePart("Head", Vector3.new(sz * 0.9, sz * 0.9, sz * 0.9),
+            cf * CFrame.new(0, sz * 1.05, 0), bodyColor)
+        -- Face
+        makePart("Face", Vector3.new(sz * 0.6, sz * 0.5, sz * 0.1),
+            cf * CFrame.new(0, sz * 1.05, sz * 0.45), faceColor)
+        -- Eyes
+        makePart("EyeL", Vector3.new(sz * 0.15, sz * 0.15, sz * 0.15),
+            cf * CFrame.new(-sz * 0.2, sz * 1.15, sz * 0.5), eyeColor)
+        makePart("EyeR", Vector3.new(sz * 0.15, sz * 0.15, sz * 0.15),
+            cf * CFrame.new(sz * 0.2, sz * 1.15, sz * 0.5), eyeColor)
+        -- Arms
+        makePart("ArmL", Vector3.new(sz * 0.25, sz * 1, sz * 0.25),
+            cf * CFrame.new(-sz * 0.65, sz * 0.3, 0), bodyColor)
+        makePart("ArmR", Vector3.new(sz * 0.25, sz * 1, sz * 0.25),
+            cf * CFrame.new(sz * 0.65, sz * 0.3, 0), bodyColor)
+        -- Legs
+        makePart("LegL", Vector3.new(sz * 0.3, sz * 0.8, sz * 0.3),
+            cf * CFrame.new(-sz * 0.25, -sz * 0.9, 0), bodyColor)
+        makePart("LegR", Vector3.new(sz * 0.3, sz * 0.8, sz * 0.3),
+            cf * CFrame.new(sz * 0.25, -sz * 0.9, 0), bodyColor)
 
         return folder
     end
@@ -1040,6 +1332,7 @@ buildStreamerUI = function()
         if State.IsMonkeyActive then return end
         State.IsMonkeyActive = true
 
+        -- Hapus monyet lama
         local old = workspace:FindFirstChild(CFG.MonkeyFolder)
         if old then old:Destroy() end
 
@@ -1049,10 +1342,10 @@ buildStreamerUI = function()
 
         State.Monkeys = {}
         local dirs = {
-            Vector3.new(0, 0, 1),
-            Vector3.new(0, 0, -1),
-            Vector3.new(1, 0, 0),
-            Vector3.new(-1, 0, 0),
+            Vector3.new(0, 0, 1),   -- depan
+            Vector3.new(0, 0, -1),  -- belakang
+            Vector3.new(1, 0, 0),   -- kanan
+            Vector3.new(-1, 0, 0),  -- kiri
         }
 
         task.spawn(function()
@@ -1064,12 +1357,14 @@ buildStreamerUI = function()
                         local center = hrp.Position
                         local dist = CFG.MonkeyDistance
 
+                        -- Update/create monyet
                         for i, dir in ipairs(dirs) do
                             local targetPos = center + dir * dist
                             local facing = -dir
                             if not State.Monkeys[i] or not State.Monkeys[i].Parent then
                                 State.Monkeys[i] = createMonkey(targetPos, facing)
                             else
+                                -- Update posisi monyet (semua part)
                                 local cf = CFrame.new(targetPos, targetPos + facing)
                                 local parts = {
                                     Body = cf,
@@ -1094,6 +1389,7 @@ buildStreamerUI = function()
             end
         end)
 
+        -- Push loop terpisah (lebih smooth)
         task.spawn(function()
             while State.IsMonkeyActive and folder.Parent do
                 local char = LocalPlayer.Character
@@ -1101,6 +1397,7 @@ buildStreamerUI = function()
                     local hrp = char:FindFirstChild("HumanoidRootPart")
                     local humanoid = char:FindFirstChildOfClass("Humanoid")
                     if hrp and humanoid and humanoid.Health > 0 then
+                        -- Hitung center dari 4 monyet
                         local center = Vector3.new(0, 0, 0)
                         local count = 0
                         for _, m in pairs(State.Monkeys) do
@@ -1110,13 +1407,16 @@ buildStreamerUI = function()
                                 count = count + 1
                             end
                         end
+
                         if count > 0 then
                             center = center / count
+                            -- Dorong player pelan-pelan ke center (bukan hajar)
                             local dir = (center - hrp.Position)
-                            dir = Vector3.new(dir.X, 0, dir.Z)
+                            dir = Vector3.new(dir.X, 0, dir.Z) -- hilangkan Y biar ga dorong atas
                             if dir.Magnitude > 0.5 then
                                 dir = dir.Unit * CFG.MonkeyForce
                                 local curVel = hrp.Velocity
+                                -- Smooth: campur velocity lama dengan dorongan baru (biar ga mental)
                                 hrp.Velocity = Vector3.new(
                                     curVel.X * 0.7 + dir.X * 0.3,
                                     curVel.Y,
@@ -1152,7 +1452,9 @@ buildStreamerUI = function()
 
     monkeyToggleBtn.MouseButton1Click:Connect(toggleMonkeys)
 
+    -- ═══════════════════════════════════════════════════════════
     -- PRISON
+    -- ═══════════════════════════════════════════════════════════
     local function buildPrison()
         if State.PrisonFolder then State.PrisonFolder:Destroy() State.PrisonFolder = nil end
         local char = LocalPlayer.Character
@@ -1302,7 +1604,9 @@ buildStreamerUI = function()
         if State.IsPrisonActive then trapChar() end
     end)
 
+    -- ═══════════════════════════════════════════════════════════
     -- CHECKPOINT RENDER
+    -- ═══════════════════════════════════════════════════════════
     local function renderCheckpoints()
         for _, child in ipairs(cpScroll:GetChildren()) do
             if child:IsA("Frame") or child:IsA("TextButton") then child:Destroy() end
@@ -1387,7 +1691,9 @@ buildStreamerUI = function()
 
     renderCheckpoints()
 
+    -- ═══════════════════════════════════════════════════════════
     -- EVENTS
+    -- ═══════════════════════════════════════════════════════════
     CloseBtn.MouseButton1Click:Connect(function()
         tween(Panel, {Size = UDim2.new(0, 0, 0, 0)}, 0.25):Play()
         task.wait(0.3)
@@ -1440,7 +1746,9 @@ buildStreamerUI = function()
         renderCheckpoints()
     end)
 
+    -- ═══════════════════════════════════════════════════════════
     -- KEYBIND HANDLING
+    -- ═══════════════════════════════════════════════════════════
     UserInputService.InputBegan:Connect(function(input, gpe)
         if gpe then return end
         if isTextBoxFocused() then return end
@@ -1531,293 +1839,6 @@ buildStreamerUI = function()
                 flyTo(Vector3.new(cp.position.x, cp.position.y, cp.position.z))
                 break
             end
-        end
-    end)
-
-    print("[LUXXYS] Streamer UI loaded! ✅")
-end
-
--- ═══════════════════════════════════════════════════════════════
--- KEY UI
--- ═══════════════════════════════════════════════════════════════
-local function buildKeyUI()
-    print("[LUXXYS] Building Key UI...")
-
-    local old = CoreGui:FindFirstChild("LuxxysKeyUI")
-    if old then old:Destroy() end
-
-    local sg = new("ScreenGui", {
-        Name = "LuxxysKeyUI",
-        ResetOnSpawn = false,
-        IgnoreGuiInset = true,
-        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-        Parent = CoreGui,
-    })
-
-    local backdrop = new("Frame", {
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundColor3 = Color3.fromRGB(0, 0, 0),
-        BackgroundTransparency = 0.5,
-        BorderSizePixel = 0,
-        ZIndex = 1,
-        Parent = sg,
-    })
-
-    local Main = new("Frame", {
-        Size = UDim2.new(0, 420, 0, 340),
-        Position = UDim2.new(0.5, -210, 0.5, -170),
-        BackgroundColor3 = COLOR.White,
-        BorderSizePixel = 0,
-        Active = true,
-        Draggable = true,
-        ZIndex = 10,
-        Parent = sg,
-    })
-    corner(Main, 18)
-
-    new("UIGradient", {
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, COLOR.SkyTop),
-            ColorSequenceKeypoint.new(0.4, COLOR.SkyMid),
-            ColorSequenceKeypoint.new(0.7, COLOR.White),
-            ColorSequenceKeypoint.new(1, COLOR.SkyMid),
-        }),
-        Rotation = 135,
-        Parent = Main,
-    })
-
-    stroke(Main, COLOR.BorderBlue, 3)
-
-    local Shimmer = new("Frame", {
-        Size = UDim2.new(0, 100, 1, 0),
-        Position = UDim2.new(-0.3, 0, 0, 0),
-        BackgroundColor3 = COLOR.White,
-        BackgroundTransparency = 0.6,
-        BorderSizePixel = 0,
-        ZIndex = 11,
-        Parent = Main,
-    })
-    corner(Shimmer, 18)
-    new("UIGradient", {
-        Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0, 1),
-            NumberSequenceKeypoint.new(0.5, 0.1),
-            NumberSequenceKeypoint.new(1, 1),
-        }),
-        Parent = Shimmer,
-    })
-
-    task.spawn(function()
-        while Shimmer.Parent do
-            Shimmer.Position = UDim2.new(-0.3, 0, 0, 0)
-            tween(Shimmer, {Position = UDim2.new(1.3, 0, 0, 0)}, 2.5, Enum.EasingStyle.Linear):Play()
-            task.wait(3)
-        end
-    end)
-
-    new("TextLabel", {
-        Size = UDim2.new(1, -40, 0, 40),
-        Position = UDim2.new(0, 20, 0, 20),
-        BackgroundTransparency = 1,
-        Text = "🔐 LUXXY PREMIUM ACCESS",
-        TextColor3 = COLOR.DarkText,
-        Font = Enum.Font.GothamBold,
-        TextSize = 20,
-        TextXAlignment = Enum.TextXAlignment.Center,
-        ZIndex = 20,
-        Parent = Main,
-    })
-
-    new("TextLabel", {
-        Size = UDim2.new(1, -40, 0, 20),
-        Position = UDim2.new(0, 20, 0, 62),
-        BackgroundTransparency = 1,
-        Text = "Masukkan key untuk akses script",
-        TextColor3 = COLOR.ShadowBlue,
-        Font = Enum.Font.Gotham,
-        TextSize = 12,
-        TextXAlignment = Enum.TextXAlignment.Center,
-        ZIndex = 20,
-        Parent = Main,
-    })
-
-    new("Frame", {
-        Size = UDim2.new(1, -80, 0, 1),
-        Position = UDim2.new(0, 40, 0, 90),
-        BackgroundColor3 = COLOR.BorderBlue,
-        BackgroundTransparency = 0.3,
-        BorderSizePixel = 0,
-        ZIndex = 20,
-        Parent = Main,
-    })
-
-    local Input = new("TextBox", {
-        Size = UDim2.new(1, -60, 0, 48),
-        Position = UDim2.new(0, 30, 0, 110),
-        BackgroundColor3 = COLOR.White,
-        BackgroundTransparency = 0.15,
-        BorderSizePixel = 0,
-        Text = "",
-        PlaceholderText = "Luxxy-XXXX-XXXX-XXXX",
-        PlaceholderColor3 = Color3.fromRGB(150, 180, 210),
-        TextColor3 = COLOR.DarkText,
-        Font = Enum.Font.Code,
-        TextSize = 16,
-        TextXAlignment = Enum.TextXAlignment.Center,
-        ClearTextOnFocus = false,
-        ZIndex = 20,
-        Parent = Main,
-    })
-    corner(Input, 10)
-    stroke(Input, COLOR.BorderBlue, 2)
-
-    local Status = new("TextLabel", {
-        Size = UDim2.new(1, -60, 0, 24),
-        Position = UDim2.new(0, 30, 0, 168),
-        BackgroundTransparency = 1,
-        Text = "",
-        TextColor3 = COLOR.ShadowBlue,
-        Font = Enum.Font.GothamBold,
-        TextSize = 13,
-        TextXAlignment = Enum.TextXAlignment.Center,
-        ZIndex = 20,
-        Parent = Main,
-    })
-
-    local VerifyBtn = new("TextButton", {
-        Size = UDim2.new(1, -60, 0, 48),
-        Position = UDim2.new(0, 30, 0, 200),
-        BackgroundColor3 = COLOR.BorderBlue,
-        BorderSizePixel = 0,
-        Text = "✓ VERIFIKASI KEY",
-        TextColor3 = COLOR.White,
-        Font = Enum.Font.GothamBold,
-        TextSize = 15,
-        ZIndex = 20,
-        Parent = Main,
-    })
-    corner(VerifyBtn, 10)
-
-    local vGrad = new("UIGradient", {
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 180, 255)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(120, 200, 255)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 180, 255)),
-        }),
-        Parent = VerifyBtn,
-    })
-
-    task.spawn(function()
-        while vGrad.Parent do
-            vGrad.Offset = Vector2.new(-1, 0)
-            tween(vGrad, {Offset = Vector2.new(1, 0)}, 2, Enum.EasingStyle.Linear):Play()
-            task.wait(2.2)
-        end
-    end)
-
-    new("TextLabel", {
-        Size = UDim2.new(1, -60, 0, 40),
-        Position = UDim2.new(0, 30, 0, 258),
-        BackgroundTransparency = 1,
-        Text = "💬 Belum punya key?\nChat Admin WhatsApp: " .. ADMIN_WA,
-        TextColor3 = COLOR.DarkText,
-        Font = Enum.Font.Gotham,
-        TextSize = 11,
-        TextXAlignment = Enum.TextXAlignment.Center,
-        TextYAlignment = Enum.TextYAlignment.Top,
-        TextWrapped = true,
-        ZIndex = 20,
-        Parent = Main,
-    })
-
-    local function setStatus(txt, clr)
-        Status.Text = txt
-        Status.TextColor3 = clr
-    end
-
-    local function setBtn(state)
-        if state == "loading" then
-            VerifyBtn.Text = "⏳ MEMVERIFIKASI..."
-            VerifyBtn.BackgroundColor3 = COLOR.Warning
-            vGrad.Enabled = false
-        elseif state == "valid" then
-            VerifyBtn.Text = "✓ AKSES DITERIMA"
-            VerifyBtn.BackgroundColor3 = COLOR.Success
-        elseif state == "error" then
-            VerifyBtn.Text = "✗ AKSES DITOLAK"
-            VerifyBtn.BackgroundColor3 = COLOR.Error
-            vGrad.Enabled = false
-        else
-            VerifyBtn.Text = "✓ VERIFIKASI KEY"
-            VerifyBtn.BackgroundColor3 = COLOR.BorderBlue
-            vGrad.Enabled = true
-        end
-    end
-
-    local function doVerify()
-        local key = Input.Text
-        if key == "" or #key < 5 then
-            setStatus("❌ Key tidak boleh kosong!", COLOR.Error)
-            return
-        end
-
-        setStatus("⏳ Memverifikasi ke server...", COLOR.Warning)
-        setBtn("loading")
-
-        task.spawn(function()
-            local data, err = verifyKey(key)
-            if data and data.valid then
-                setStatus("✅ Akses diterima! Memuat script...", COLOR.Success)
-                setBtn("valid")
-                saveKey(key)
-
-                task.wait(1.5)
-
-                tween(Main, {BackgroundTransparency = 1, Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0)}, 0.5):Play()
-                tween(backdrop, {BackgroundTransparency = 1}, 0.5):Play()
-
-                task.wait(0.6)
-                sg:Destroy()
-
-                if type(buildStreamerUI) == "function" then
-                    print("[LUXXYS] Loading Streamer UI...")
-                    buildStreamerUI()
-                else
-                    print("[LUXXYS] ERROR: buildStreamerUI is not a function:", type(buildStreamerUI))
-                end
-            else
-                setStatus("❌ " .. tostring(err), COLOR.Error)
-                setBtn("error")
-                task.wait(2)
-                setBtn("idle")
-            end
-        end)
-    end
-
-    VerifyBtn.MouseButton1Click:Connect(doVerify)
-    Input.FocusLost:Connect(function(enter) if enter then doVerify() end end)
-
-    -- Auto login
-    task.spawn(function()
-        local savedKey = loadKey()
-        if not savedKey then return end
-        Input.Text = savedKey
-        setStatus("⏳ Auto-login...", COLOR.Warning)
-        task.wait(0.5)
-        local data, err = verifyKey(savedKey)
-        if data and data.valid then
-            setStatus("✅ Auto-login OK", COLOR.Success)
-            task.wait(0.8)
-            tween(Main, {BackgroundTransparency = 1, Size = UDim2.new(0, 0, 0, 0)}, 0.5):Play()
-            tween(backdrop, {BackgroundTransparency = 1}, 0.5):Play()
-            task.wait(0.6)
-            sg:Destroy()
-            if type(buildStreamerUI) == "function" then
-                print("[LUXXYS] Auto-login → Streamer UI")
-                buildStreamerUI()
-            end
-        else
-            setStatus("❌ Key tersimpan invalid.", COLOR.Error)
         end
     end)
 end
